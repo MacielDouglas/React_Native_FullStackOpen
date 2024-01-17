@@ -39,9 +39,9 @@ export default function SignIn() {
       await signIn({ username, password });
 
       navigate('/');
-      console.log('DATA: ', data);
+      // console.log('DATA: ', data);
     } catch (error) {
-      console.log(error);
+      console.log('Outro errros: ', error);
     }
   };
 
