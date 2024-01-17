@@ -13,7 +13,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     padding: 20,
   },
-  // ...
 });
 
 const AppBar = () => {
