@@ -3,6 +3,9 @@ import { FlatList, View, StyleSheet } from 'react-native';
 import RepositoryItem from './RepositoryItem';
 import { useState, useEffect } from 'react';
 import useRepositories from '../hooks/useRepositories';
+import { Picker } from '@react-native-picker/picker';
+import { Searchbar } from 'react-native-paper';
+import { useDebounce } from 'use-debounce';
 
 const styles = StyleSheet.create({
   separator: {
@@ -60,7 +63,12 @@ const styles = StyleSheet.create({
 const ItemSeparator = () => <View style={styles.separator} />;
 const keyExtractor = (item) => item.id;
 
-export const RepositoryListContainer = ({ repositories }) => {
+export const RepositoryListContainer = ({
+  repositories,
+  order,
+  setOrder,
+  onEndReach,
+}) => {
   const repositoryNodes = repositories
     ? repositories.edges.map((edge) => edge.node)
     : [];
@@ -71,14 +79,89 @@ export const RepositoryListContainer = ({ repositories }) => {
       keyExtractor={keyExtractor}
       renderItem={({ item }) => <RepositoryItem item={item} />}
       ItemSeparatorComponent={ItemSeparator}
+      ListHeaderComponent={() => (
+        <Picker
+          style={styles.picker}
+          selectedValue={order}
+          onValueChange={(itemValue) => setOrder(itemValue)}
+        >
+          <Picker.Item label="Latest repositories" value="latest" />
+          <Picker.Item label="Higest rated repositories" value="highestRated" />
+          <Picker.Item label="Lowest rated repositories" value="lowestRated" />
+        </Picker>
+      )}
+      onEndReached={onEndReach}
+      onEndReachedThreshold={0.5}
     />
   );
 };
 
 const RepositoryList = () => {
-  const { repositories } = useRepositories();
+  const [order, setOrder] = useState('latest');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchKeyword] = useDebounce(searchQuery, 1000);
 
-  return <RepositoryListContainer repositories={repositories} />;
+  const onChangeSearch = (query) => setSearchQuery(query);
+
+  let orderBy;
+  let orderDirection;
+  let first;
+
+  switch (order) {
+    case 'latest':
+      orderBy = 'CREATED_AT';
+      orderDirection = 'DESC';
+      first = 4;
+      break;
+
+    case 'highestRated':
+      orderBy = 'RATING_AVERAGE';
+      orderDirection = 'DESC';
+      first = 4;
+      break;
+
+    case 'lowestRated':
+      orderBy = 'RATING_AVERAGE';
+      orderDirection = 'ASC';
+      first = 4;
+      break;
+  }
+
+  const { repositories, fetchMore } = useRepositories(
+    orderBy,
+    orderDirection,
+    searchKeyword,
+    first,
+  );
+
+  console.log(
+    'repositoryListFilter',
+    orderBy,
+    orderDirection,
+    order,
+    searchKeyword,
+    first,
+  );
+
+  const onEndReach = () => {
+    fetchMore();
+  };
+
+  return (
+    <>
+      <Searchbar
+        placeholder="Search"
+        onChangeText={onChangeSearch}
+        value={searchQuery}
+      />
+      <RepositoryListContainer
+        repositories={repositories}
+        order={order}
+        setOrder={setOrder}
+        onEndReach={onEndReach}
+      />
+    </>
+  );
 };
 
 export default RepositoryList;
