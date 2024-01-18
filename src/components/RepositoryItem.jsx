@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
 const RepositoryItem = ({ item }) => {
   const valorArredondado = Math.round();
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="repositoryItem">
       <View style={styles.containerDescription}>
         <Image style={styles.img} source={{ uri: `${item.ownerAvatarUrl}` }} />
         <View>
